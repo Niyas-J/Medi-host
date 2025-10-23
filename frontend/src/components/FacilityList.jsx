@@ -13,6 +13,10 @@ const FacilityList = ({ facilities, onBookAppointment, onShowOnMap, filter, setF
         return '🏪'
       case 'pharmacy':
         return '💊'
+      case 'dentist':
+        return '🦷'
+      case 'doctors':
+        return '👨‍⚕️'
       default:
         return '🏥'
     }
@@ -26,6 +30,10 @@ const FacilityList = ({ facilities, onBookAppointment, onShowOnMap, filter, setF
         return 'bg-blue-100 text-blue-800'
       case 'pharmacy':
         return 'bg-green-100 text-green-800'
+      case 'dentist':
+        return 'bg-purple-100 text-purple-800'
+      case 'doctors':
+        return 'bg-indigo-100 text-indigo-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -43,7 +51,7 @@ const FacilityList = ({ facilities, onBookAppointment, onShowOnMap, filter, setF
 
         {/* Filter buttons */}
         <div className="flex flex-wrap gap-2">
-          {['all', 'hospital', 'clinic', 'pharmacy'].map((type) => (
+          {['all', 'hospital', 'clinic', 'pharmacy', 'dentist', 'doctors'].map((type) => (
             <button
               key={type}
               onClick={() => setFilter(type)}
@@ -85,6 +93,13 @@ const FacilityList = ({ facilities, onBookAppointment, onShowOnMap, filter, setF
               </div>
 
               <div className="space-y-2 text-sm text-gray-600 mb-4">
+                {/* Distance - NEW from Geoapify */}
+                {facility.distanceKm && (
+                  <p className="flex items-center gap-2">
+                    <span className="text-base">📏</span>
+                    <span className="font-bold text-blue-600">{facility.distanceKm} km away</span>
+                  </p>
+                )}
                 {facility.address && facility.address.trim() && (
                   <p className="flex items-start gap-2">
                     <span className="text-base">📍</span>

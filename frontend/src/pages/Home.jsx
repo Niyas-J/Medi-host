@@ -5,7 +5,7 @@ import MapView from '../components/MapView'
 import FacilityList from '../components/FacilityList'
 import AppointmentForm from '../components/AppointmentForm'
 import EmergencyButton from '../components/EmergencyButton'
-import { fetchNearbyFacilitiesDirectly } from '../utils/overpassAPI'
+import { fetchNearbyHospitalsGeoapify, geocodeLocation } from '../utils/geoapifyAPI'
 
 const Home = () => {
   const [userLocation, setUserLocation] = useState(null)
@@ -51,19 +51,25 @@ const Home = () => {
     setError('')
 
     try {
-      // Use direct Overpass API (works without backend)
-      console.log('Fetching facilities for:', { lat, lon, radius })
-      const response = await fetchNearbyFacilitiesDirectly(lat, lon, radius)
+      // Use Geoapify Places API for live location and nearby hospitals
+      console.log('🏥 Fetching facilities using Geoapify API:', { lat, lon, radius })
+      const response = await fetchNearbyHospitalsGeoapify(lat, lon, radius, 20)
       
       if (response.success) {
-        console.log('Found facilities:', response.facilities.length)
+        console.log('✅ Found facilities:', response.facilities.length)
         setFacilities(response.facilities)
+        
+        // Show info message if no facilities found
+        if (response.facilities.length === 0) {
+          setError(response.message || 'No medical facilities found in this area. Try increasing the search radius.')
+        }
       } else {
-        throw new Error(response.error || 'Failed to fetch facilities')
+        // Show user-friendly error from Geoapify API
+        setError(response.error || 'Unable to fetch nearby hospitals.')
       }
     } catch (err) {
-      setError(err.message || 'Failed to fetch nearby facilities. Please check your internet connection.')
-      console.error('Fetch error:', err)
+      setError('Unable to fetch nearby hospitals. Please check your internet connection.')
+      console.error('❌ Fetch error:', err)
     } finally {
       setLoading(false)
     }
@@ -84,22 +90,25 @@ const Home = () => {
     e.preventDefault()
     if (!searchLocation.trim()) return
 
-    try {
-      // Use Nominatim API for geocoding
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchLocation)}&format=json&limit=1`
-      )
+    setLoading(true)
 
-      if (response.data && response.data.length > 0) {
-        const { lat, lon } = response.data[0]
-        setUserLocation([parseFloat(lat), parseFloat(lon)])
-        fetchNearbyFacilities(parseFloat(lat), parseFloat(lon), searchRadius)
+    try {
+      // Use Geoapify Geocoding API
+      console.log('🔍 Searching location:', searchLocation)
+      const response = await geocodeLocation(searchLocation)
+
+      if (response.success) {
+        console.log('✅ Location found:', response.name)
+        setUserLocation([response.lat, response.lon])
+        await fetchNearbyFacilities(response.lat, response.lon, searchRadius)
       } else {
         alert('Location not found. Please try a different search.')
+        setLoading(false)
       }
     } catch (error) {
-      console.error('Geocoding error:', error)
+      console.error('❌ Geocoding error:', error)
       alert('Failed to search location. Please try again.')
+      setLoading(false)
     }
   }
 

@@ -43,8 +43,8 @@ A modern, full-stack web application that helps users find nearby hospitals, cli
 - **SQLite** - Lightweight database
 
 ### APIs
-- **Overpass API** - OpenStreetMap data for facilities
-- **Nominatim** - Geocoding for location search
+- **Geoapify Places API** - Real-time healthcare facility data with distance calculation
+- **Geoapify Geocoding API** - Location search and coordinates
 
 ## 📁 Project Structure
 
@@ -85,6 +85,7 @@ Medi-Host/
 - **Node.js** (v16 or higher)
 - **Python** (3.8 or higher)
 - **npm** or **yarn**
+- **Geoapify API Key** (free) - [Get it here](https://myprojects.geoapify.com/register)
 
 ### Backend Setup
 
@@ -128,7 +129,21 @@ Medi-Host/
    npm install
    ```
 
-3. **Start development server:**
+3. **Set up Geoapify API Key:**
+   
+   Create a `.env` file in the `frontend` folder:
+   ```bash
+   touch .env
+   ```
+   
+   Add your Geoapify API key:
+   ```env
+   VITE_GEOAPIFY_API_KEY=your_api_key_here
+   ```
+   
+   📖 **[Get FREE API Key & Setup Guide](GEOAPIFY_SETUP.md)**
+
+4. **Start development server:**
    ```bash
    npm run dev
    ```
