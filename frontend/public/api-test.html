@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Quick API Diagnostic</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        button:active { transform: translateY(0); }
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        .info { color: #17a2b8; font-weight: bold; }
+        .step { margin: 10px 0; padding: 10px; background: white; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Medi-Host Diagnostic Tool</h1>
+        <p class="subtitle">Test your Geoapify API and location detection</p>
+        
+        <div>
+            <button onclick="testAPIKey()">🔑 Test API Key</button>
+            <button onclick="testLocation()">📍 Test Location Detection</button>
+            <button onclick="testFullSearch()">🏥 Full Hospital Search</button>
+            <button onclick="clearOutput()">🗑️ Clear</button>
+        </div>
+        
+        <div id="output">Click a button above to start testing...</div>
+    </div>
+
+    <script>
+        const API_KEY = 'dc461739b87042228f6be3ee0e2bf02a';
+        const output = document.getElementById('output');
+
+        function log(message, type = 'info') {
+            const colors = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: '🔵'
+            };
+            output.innerHTML += `<div class="step ${type}">${colors[type]} ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            output.innerHTML = 'Click a button above to start testing...';
+        }
+
+        async function testAPIKey() {
+            clearOutput();
+            log('Starting API Key Test...', 'info');
+            
+            if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
+                log('ERROR: API Key not configured!', 'error');
+                log('Please add your Geoapify API key', 'error');
+                return;
+            }
+            
+            log(`API Key found: ${API_KEY.substring(0, 10)}...`, 'success');
+            
+            try {
+                log('Testing API connection...', 'info');
+                const url = `https://api.geoapify.com/v2/places?categories=healthcare.hospital&filter=circle:-74.0060,40.7128,5000&limit=1&apiKey=${API_KEY}`;
+                
+                const response = await fetch(url);
+                log(`Response Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ API KEY IS WORKING PERFECTLY!', 'success');
+                    log(`API returned ${data.features ? data.features.length : 0} results`, 'success');
+                } else {
+                    log(`API Error: ${data.message || 'Unknown error'}`, 'error');
+                    if (response.status === 401) {
+                        log('Invalid API Key - Please check your key', 'error');
+                    } else if (response.status === 429) {
+                        log('Rate limit exceeded - Wait a moment', 'warning');
+                    }
+                }
+            } catch (error) {
+                log(`Network Error: ${error.message}`, 'error');
+                log('Check your internet connection', 'warning');
+            }
+        }
+
+        function testLocation() {
+            clearOutput();
+            log('Starting Location Detection Test...', 'info');
+            
+            if (!navigator.geolocation) {
+                log('❌ Geolocation NOT supported by your browser', 'error');
+                return;
+            }
+            
+            log('✅ Geolocation API is available', 'success');
+            log('Requesting location permission...', 'info');
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    log('✅ LOCATION DETECTED!', 'success');
+                    log(`Latitude: ${position.coords.latitude}`, 'success');
+                    log(`Longitude: ${position.coords.longitude}`, 'success');
+                    log(`Accuracy: ${position.coords.accuracy} meters`, 'info');
+                },
+                (error) => {
+                    log('❌ Location Detection Failed', 'error');
+                    switch(error.code) {
+                        case 1:
+                            log('ERROR: User denied location permission', 'error');
+                            log('Please allow location access in browser settings', 'warning');
+                            break;
+                        case 2:
+                            log('ERROR: Location unavailable', 'error');
+                            break;
+                        case 3:
+                            log('ERROR: Location request timeout', 'error');
+                            break;
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        async function testFullSearch() {
+            clearOutput();
+            log('Starting Full Hospital Search Test...', 'info');
+            
+            if (!navigator.geolocation) {
+                log('❌ Geolocation not supported', 'error');
+                return;
+            }
+            
+            log('Getting your location...', 'info');
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    log(`✅ Location: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, 'success');
+                    log('Searching for nearby medical facilities...', 'info');
+                    
+                    try {
+                        const categories = 'healthcare.hospital,healthcare.clinic,healthcare.pharmacy,healthcare.dentist,healthcare.doctors,commercial.chemist,commercial.pharmacy';
+                        const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},5000&limit=20&apiKey=${API_KEY}`;
+                        
+                        log('Making API request...', 'info');
+                        const response = await fetch(url);
+                        
+                        if (!response.ok) {
+                            log(`❌ API Error: ${response.status}`, 'error');
+                            return;
+                        }
+                        
+                        const data = await response.json();
+                        
+                        if (data.features && data.features.length > 0) {
+                            log(`🎉 SUCCESS! Found ${data.features.length} medical facilities`, 'success');
+                            log('', 'info');
+                            
+                            data.features.slice(0, 5).forEach((f, i) => {
+                                const props = f.properties;
+                                const coords = f.geometry.coordinates;
+                                const dist = calculateDistance(lat, lon, coords[1], coords[0]);
+                                
+                                log(`${i+1}. ${props.name || 'Unnamed'}`, 'success');
+                                log(`   Type: ${props.categories ? props.categories[0] : 'Unknown'}`, 'info');
+                                log(`   Distance: ${dist.toFixed(2)} km`, 'info');
+                                log(`   Address: ${props.formatted || 'N/A'}`, 'info');
+                                log('', 'info');
+                            });
+                            
+                            log('✅ EVERYTHING IS WORKING!', 'success');
+                            log('Your app should show hospitals now', 'success');
+                        } else {
+                            log('⚠️ No facilities found in 5km radius', 'warning');
+                            log('Try increasing search radius or move to a different location', 'warning');
+                        }
+                    } catch (error) {
+                        log(`❌ Error: ${error.message}`, 'error');
+                    }
+                },
+                (error) => {
+                    log('❌ Could not get location', 'error');
+                    log(error.message, 'error');
+                }
+            );
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                     Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Auto-run basic checks on load
+        setTimeout(() => {
+            log('🔍 Running automatic checks...', 'info');
+            testAPIKey();
+        }, 500);
+    </script>
+</body>
+</html>
+
