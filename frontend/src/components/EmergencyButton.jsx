@@ -31,7 +31,21 @@ const EmergencyButton = ({ userLocation }) => {
         setShowConfirm(false)
       }
     } catch (error) {
-      alert('❌ Failed to send emergency alert. Please call emergency services directly.')
+      // Save emergency alert locally if backend unavailable
+      if (!error.response) {
+        const emergencyAlerts = JSON.parse(localStorage.getItem('emergencyAlerts') || '[]')
+        emergencyAlerts.push({
+          ...emergencyData,
+          id: Date.now(),
+          created_at: new Date().toISOString()
+        })
+        localStorage.setItem('emergencyAlerts', JSON.stringify(emergencyAlerts))
+        
+        alert('🚨 Emergency alert saved locally! IMPORTANT: Call emergency services immediately at 911 (US) / 112 (EU) / 999 (UK)')
+        setShowConfirm(false)
+      } else {
+        alert('❌ Failed to send emergency alert. Please call emergency services directly: 911 (US) / 112 (EU) / 999 (UK)')
+      }
       console.error('Emergency alert error:', error)
     } finally {
       setIsLoading(false)

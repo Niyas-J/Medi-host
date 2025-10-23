@@ -51,35 +51,18 @@ const Home = () => {
     setError('')
 
     try {
-      // Try backend first, fallback to direct Overpass API
-      let response;
+      // Use direct Overpass API (works without backend)
+      console.log('Fetching facilities for:', { lat, lon, radius })
+      const response = await fetchNearbyFacilitiesDirectly(lat, lon, radius)
       
-      try {
-        // Try backend API
-        response = await axios.get('/api/nearby', {
-          params: { lat, lon, radius },
-          timeout: 5000
-        })
-        
-        if (response.data.success) {
-          setFacilities(response.data.facilities)
-          setLoading(false)
-          return
-        }
-      } catch (backendError) {
-        console.log('Backend not available, using direct Overpass API...')
-        
-        // Fallback to direct Overpass API call
-        response = await fetchNearbyFacilitiesDirectly(lat, lon, radius)
-        
-        if (response.success) {
-          setFacilities(response.facilities)
-        } else {
-          throw new Error(response.error || 'Failed to fetch facilities')
-        }
+      if (response.success) {
+        console.log('Found facilities:', response.facilities.length)
+        setFacilities(response.facilities)
+      } else {
+        throw new Error(response.error || 'Failed to fetch facilities')
       }
     } catch (err) {
-      setError(err.message || 'Failed to fetch nearby facilities')
+      setError(err.message || 'Failed to fetch nearby facilities. Please check your internet connection.')
       console.error('Fetch error:', err)
     } finally {
       setLoading(false)

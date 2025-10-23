@@ -54,7 +54,27 @@ const AppointmentForm = ({ facility, onClose, onSuccess }) => {
         alert('✅ Appointment booked successfully!')
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to book appointment')
+      // If backend is not available, save locally
+      if (!err.response) {
+        // Save user data to localStorage
+        localStorage.setItem('userName', formData.name)
+        localStorage.setItem('userPhone', formData.phone)
+        
+        // Save appointment locally
+        const appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
+        appointments.push({
+          ...appointmentData,
+          id: Date.now(),
+          created_at: new Date().toISOString()
+        })
+        localStorage.setItem('appointments', JSON.stringify(appointments))
+        
+        onSuccess && onSuccess()
+        onClose()
+        alert('✅ Appointment saved locally! Note: Backend connection unavailable.')
+      } else {
+        setError(err.response?.data?.error || 'Failed to book appointment')
+      }
     } finally {
       setIsSubmitting(false)
     }
