@@ -16,7 +16,7 @@ const Home = () => {
   const [showAppointmentForm, setShowAppointmentForm] = useState(false)
   const [filter, setFilter] = useState('all')
   const [searchLocation, setSearchLocation] = useState('')
-  const [searchRadius, setSearchRadius] = useState(10000) // 10km default
+  const [searchRadius, setSearchRadius] = useState(20000) // 20km default - increased for better coverage
 
   useEffect(() => {
     getUserLocation()
@@ -53,7 +53,8 @@ const Home = () => {
     try {
       // Use Geoapify Places API for live location and nearby hospitals
       console.log('🏥 Fetching facilities using Geoapify API:', { lat, lon, radius })
-      const response = await fetchNearbyHospitalsGeoapify(lat, lon, radius, 20)
+      console.log('📍 User Location:', `https://www.google.com/maps?q=${lat},${lon}`)
+      const response = await fetchNearbyHospitalsGeoapify(lat, lon, radius, 50)
       
       if (response.success) {
         console.log('✅ Found facilities:', response.facilities.length)
@@ -178,7 +179,7 @@ const Home = () => {
               <input
                 type="range"
                 min="1000"
-                max="20000"
+                max="50000"
                 step="1000"
                 value={searchRadius}
                 onChange={(e) => {
@@ -190,7 +191,7 @@ const Home = () => {
                 }}
                 className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
-              <span className="text-xs text-gray-500">20km</span>
+              <span className="text-xs text-gray-500">50km</span>
             </div>
           </div>
         </div>
