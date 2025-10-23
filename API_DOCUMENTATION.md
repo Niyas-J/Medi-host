@@ -276,6 +276,159 @@ Retrieve all emergency alerts for admin dashboard.
 
 ---
 
+### 7. Get All Custom Hospitals
+
+**GET** `/api/hospitals`
+
+Retrieve all custom hospitals from the database.
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "count": 8,
+  "hospitals": [
+    {
+      "id": "custom_1",
+      "name": "City General Hospital",
+      "type": "hospital",
+      "latitude": 40.7589,
+      "longitude": -73.9851,
+      "address": "123 Medical Center Drive, New York, NY 10001",
+      "phone": "+1 (555) 123-4567",
+      "opening_hours": "24/7",
+      "website": "https://citygeneralhospital.example.com",
+      "description": "Full-service hospital with emergency room",
+      "is_featured": true,
+      "created_at": "2025-10-23T10:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### 8. Create Custom Hospital
+
+**POST** `/api/hospitals`
+
+Add a new custom hospital to the database.
+
+**Request Body:**
+```json
+{
+  "name": "New Medical Center",
+  "type": "hospital",
+  "latitude": 40.7489,
+  "longitude": -73.9680,
+  "address": "456 Health Avenue, New York, NY",
+  "phone": "+1 (555) 234-5678",
+  "opening_hours": "24/7",
+  "website": "https://newmedical.example.com",
+  "description": "Modern medical facility",
+  "is_featured": true
+}
+```
+
+**Field Validation:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | Hospital name (max 200 chars) |
+| type | string | Yes | Type: hospital, clinic, pharmacy, dentist, doctors |
+| latitude | float | Yes | Latitude coordinate |
+| longitude | float | Yes | Longitude coordinate |
+| address | string | No | Full address (max 300 chars) |
+| phone | string | No | Contact phone (max 50 chars) |
+| opening_hours | string | No | Operating hours (max 200 chars) |
+| website | string | No | Website URL (max 200 chars) |
+| description | string | No | Description (max 500 chars) |
+| is_featured | boolean | No | Featured status (default: false) |
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Hospital added successfully",
+  "hospital": {
+    "id": "custom_9",
+    "name": "New Medical Center",
+    "type": "hospital",
+    "latitude": 40.7489,
+    "longitude": -73.9680,
+    "address": "456 Health Avenue, New York, NY",
+    "phone": "+1 (555) 234-5678",
+    "opening_hours": "24/7",
+    "website": "https://newmedical.example.com",
+    "description": "Modern medical facility",
+    "is_featured": true,
+    "created_at": "2025-10-23T11:00:00"
+  }
+}
+```
+
+---
+
+### 9. Update Custom Hospital
+
+**PUT** `/api/hospitals/<hospital_id>`
+
+Update an existing custom hospital.
+
+**Request Body:** (all fields optional)
+```json
+{
+  "name": "Updated Hospital Name",
+  "phone": "+1 (555) 999-9999",
+  "opening_hours": "Mon-Fri 8:00-18:00",
+  "is_featured": false
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Hospital updated successfully",
+  "hospital": {
+    "id": "custom_1",
+    "name": "Updated Hospital Name",
+    ...
+  }
+}
+```
+
+**Error Response (404):**
+```json
+{
+  "error": "Hospital not found"
+}
+```
+
+---
+
+### 10. Delete Custom Hospital
+
+**DELETE** `/api/hospitals/<hospital_id>`
+
+Delete a custom hospital from the database.
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Hospital deleted successfully"
+}
+```
+
+**Error Response (404):**
+```json
+{
+  "error": "Hospital not found"
+}
+```
+
+---
+
 ## Database Schema
 
 ### Appointment Table
@@ -299,6 +452,24 @@ CREATE TABLE emergency_alert (
     longitude FLOAT NOT NULL,
     message VARCHAR(500),
     user_info VARCHAR(200),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Hospital Table
+```sql
+CREATE TABLE hospital (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(200) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    latitude FLOAT NOT NULL,
+    longitude FLOAT NOT NULL,
+    address VARCHAR(300),
+    phone VARCHAR(50),
+    opening_hours VARCHAR(200),
+    website VARCHAR(200),
+    description VARCHAR(500),
+    is_featured BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```

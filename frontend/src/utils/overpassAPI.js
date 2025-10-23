@@ -10,9 +10,21 @@ export const fetchNearbyFacilitiesDirectly = async (lat, lon, radius = 10000) =>
         node["amenity"="hospital"](around:${radius},${lat},${lon});
         node["amenity"="clinic"](around:${radius},${lat},${lon});
         node["amenity"="pharmacy"](around:${radius},${lat},${lon});
+        node["amenity"="doctors"](around:${radius},${lat},${lon});
+        node["amenity"="dentist"](around:${radius},${lat},${lon});
+        node["healthcare"="hospital"](around:${radius},${lat},${lon});
+        node["healthcare"="clinic"](around:${radius},${lat},${lon});
+        node["healthcare"="doctor"](around:${radius},${lat},${lon});
+        node["healthcare"="dentist"](around:${radius},${lat},${lon});
+        node["healthcare"="pharmacy"](around:${radius},${lat},${lon});
         way["amenity"="hospital"](around:${radius},${lat},${lon});
         way["amenity"="clinic"](around:${radius},${lat},${lon});
         way["amenity"="pharmacy"](around:${radius},${lat},${lon});
+        way["amenity"="doctors"](around:${radius},${lat},${lon});
+        way["amenity"="dentist"](around:${radius},${lat},${lon});
+        way["healthcare"="hospital"](around:${radius},${lat},${lon});
+        way["healthcare"="clinic"](around:${radius},${lat},${lon});
+        way["healthcare"="doctor"](around:${radius},${lat},${lon});
       );
       out center;
     `;
@@ -48,10 +60,13 @@ export const fetchNearbyFacilitiesDirectly = async (lat, lon, radius = 10000) =>
 
       const tags = element.tags || {};
       
+      // Determine facility type from tags
+      const facilityType = tags.amenity || tags.healthcare || 'unknown';
+      
       const facility = {
         id: element.id,
         name: tags.name || 'Unnamed Facility',
-        type: tags.amenity || 'unknown',
+        type: facilityType,
         latitude: facilityLat,
         longitude: facilityLon,
         address: `${tags['addr:street'] || ''} ${tags['addr:housenumber'] || ''}`.trim() || 'Address not available',

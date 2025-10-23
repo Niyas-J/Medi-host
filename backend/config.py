@@ -23,8 +23,8 @@ class Config:
     OVERPASS_TIMEOUT = int(os.getenv('OVERPASS_TIMEOUT', '30'))
     
     # Search Configuration
-    DEFAULT_SEARCH_RADIUS = int(os.getenv('DEFAULT_SEARCH_RADIUS', '3000'))
-    MAX_SEARCH_RADIUS = int(os.getenv('MAX_SEARCH_RADIUS', '10000'))
+    DEFAULT_SEARCH_RADIUS = int(os.getenv('DEFAULT_SEARCH_RADIUS', '5000'))
+    MAX_SEARCH_RADIUS = int(os.getenv('MAX_SEARCH_RADIUS', '15000'))
     
     # Optional: Twilio Configuration (for SMS alerts)
     TWILIO_ENABLED = os.getenv('TWILIO_ENABLED', 'false').lower() == 'true'
