@@ -15,6 +15,7 @@ const Home = () => {
   const [showAppointmentForm, setShowAppointmentForm] = useState(false)
   const [filter, setFilter] = useState('all')
   const [searchLocation, setSearchLocation] = useState('')
+  const [searchRadius, setSearchRadius] = useState(10000) // 10km default
 
   useEffect(() => {
     getUserLocation()
@@ -34,7 +35,7 @@ const Home = () => {
       (position) => {
         const { latitude, longitude } = position.coords
         setUserLocation([latitude, longitude])
-        fetchNearbyFacilities(latitude, longitude)
+        fetchNearbyFacilities(latitude, longitude, searchRadius)
       },
       (error) => {
         setError('Unable to retrieve your location. Please enable location services.')
@@ -44,7 +45,7 @@ const Home = () => {
     )
   }
 
-  const fetchNearbyFacilities = async (lat, lon, radius = 3000) => {
+  const fetchNearbyFacilities = async (lat, lon, radius = 10000) => {
     setLoading(true)
     setError('')
 
@@ -88,7 +89,7 @@ const Home = () => {
       if (response.data && response.data.length > 0) {
         const { lat, lon } = response.data[0]
         setUserLocation([parseFloat(lat), parseFloat(lon)])
-        fetchNearbyFacilities(parseFloat(lat), parseFloat(lon))
+        fetchNearbyFacilities(parseFloat(lat), parseFloat(lon), searchRadius)
       } else {
         alert('Location not found. Please try a different search.')
       }
@@ -124,7 +125,7 @@ const Home = () => {
 
       <div className="container mx-auto px-4 py-6">
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
           <form onSubmit={handleSearchLocation} className="flex gap-2">
             <input
               type="text"
@@ -148,6 +149,37 @@ const Home = () => {
               📍
             </button>
           </form>
+
+          {/* Radius Slider */}
+          <div className="bg-white rounded-xl shadow-md p-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Search Radius: {(searchRadius / 1000).toFixed(1)} km
+              </label>
+              <span className="text-xs text-gray-500">
+                {facilities.length} facilities found
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-gray-500">1km</span>
+              <input
+                type="range"
+                min="1000"
+                max="20000"
+                step="1000"
+                value={searchRadius}
+                onChange={(e) => {
+                  const newRadius = parseInt(e.target.value)
+                  setSearchRadius(newRadius)
+                  if (userLocation) {
+                    fetchNearbyFacilities(userLocation[0], userLocation[1], newRadius)
+                  }
+                }}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <span className="text-xs text-gray-500">20km</span>
+            </div>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -181,6 +213,7 @@ const Home = () => {
                 facilities={facilities}
                 onFacilitySelect={setSelectedFacility}
                 selectedFacility={selectedFacility}
+                searchRadius={searchRadius}
               />
             </div>
 

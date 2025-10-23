@@ -57,7 +57,31 @@ function ChangeView({ center, zoom }) {
   return null
 }
 
-const MapView = ({ userLocation, facilities, onFacilitySelect, selectedFacility }) => {
+// Add radius circle to show search area
+function SearchRadius({ center, radius = 10000 }) {
+  const map = useMap()
+  
+  useEffect(() => {
+    if (!center) return
+    
+    const circle = L.circle(center, {
+      color: '#3b82f6',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.1,
+      radius: radius,
+      weight: 2,
+      dashArray: '5, 10'
+    }).addTo(map)
+    
+    return () => {
+      map.removeLayer(circle)
+    }
+  }, [center, radius, map])
+  
+  return null
+}
+
+const MapView = ({ userLocation, facilities, onFacilitySelect, selectedFacility, searchRadius = 10000 }) => {
   const [mapStyle, setMapStyle] = React.useState('satellite') // 'satellite' or 'street'
 
   const getIcon = (type) => {
@@ -77,10 +101,13 @@ const MapView = ({ userLocation, facilities, onFacilitySelect, selectedFacility 
     <div className="h-full w-full rounded-xl overflow-hidden shadow-2xl relative">
       <MapContainer
         center={userLocation || [51.505, -0.09]}
-        zoom={13}
+        zoom={12}
         className="h-full w-full"
       >
-        <ChangeView center={userLocation || [51.505, -0.09]} zoom={13} />
+        <ChangeView center={userLocation || [51.505, -0.09]} zoom={12} />
+        
+        {/* Show search radius circle */}
+        {userLocation && <SearchRadius center={userLocation} radius={searchRadius} />}
         
         {/* Conditional Tile Layers based on map style */}
         {mapStyle === 'satellite' ? (

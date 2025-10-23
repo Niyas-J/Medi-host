@@ -70,7 +70,7 @@ def get_nearby_facilities():
     try:
         lat = request.args.get('lat', type=float)
         lon = request.args.get('lon', type=float)
-        radius = request.args.get('radius', default=3000, type=int)
+        radius = request.args.get('radius', default=10000, type=int)
 
         if not lat or not lon:
             return jsonify({'error': 'Latitude and longitude are required'}), 400
