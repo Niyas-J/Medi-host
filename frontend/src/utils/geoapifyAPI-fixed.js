@@ -1,9 +1,9 @@
-// Geoapify Places API for live location and nearby hospital detection
+// Geoapify Places API for live location and nearby hospital detection - FIXED VERSION
 
+// Try to get API key from environment, fallback to hardcoded (for testing)
 const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || 'dc461739b87042228f6be3ee0e2bf02a';
 
-// Debug: Log API key status
-console.log('🔑 Geoapify API Key:', GEOAPIFY_API_KEY ? `Loaded (${GEOAPIFY_API_KEY.substring(0, 10)}...)` : 'NOT FOUND');
+console.log('🔑 API Key loaded:', GEOAPIFY_API_KEY ? `${GEOAPIFY_API_KEY.substring(0, 10)}...` : 'NOT FOUND');
 
 /**
  * Calculate distance between two coordinates using Haversine formula
@@ -38,11 +38,23 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
  */
 export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limit = 20) => {
   try {
-    console.log('🏥 Fetching hospitals from Geoapify:', { lat, lon, radius });
+    console.log('🏥 Starting Geoapify fetch:', { lat, lon, radius, apiKey: GEOAPIFY_API_KEY ? 'Present' : 'MISSING' });
+
+    if (!GEOAPIFY_API_KEY || GEOAPIFY_API_KEY === 'YOUR_API_KEY') {
+      console.error('❌ API Key not configured!');
+      return {
+        success: false,
+        error: 'API key not configured. Please add VITE_GEOAPIFY_API_KEY to your .env file',
+        facilities: [],
+        count: 0
+      };
+    }
 
     // Geoapify Places API endpoint - including all medical facilities and pharmacies
     const categories = 'healthcare.hospital,healthcare.clinic,healthcare.pharmacy,healthcare.dentist,healthcare.doctors,commercial.chemist,commercial.pharmacy';
     const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radius}&limit=${limit}&apiKey=${GEOAPIFY_API_KEY}`;
+
+    console.log('📡 Fetching from:', url.replace(GEOAPIFY_API_KEY, 'API_KEY_HIDDEN'));
 
     const response = await fetch(url, {
       method: 'GET',
@@ -51,12 +63,33 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
       },
     });
 
+    console.log('📥 Response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ API Error:', response.status, errorText);
+      
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: 'Invalid API key. Please check your Geoapify API key.',
+          facilities: [],
+          count: 0
+        };
+      } else if (response.status === 429) {
+        return {
+          success: false,
+          error: 'Rate limit exceeded. Please try again in a moment.',
+          facilities: [],
+          count: 0
+        };
+      }
+      
       throw new Error(`Geoapify API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('📡 Geoapify raw response:', data);
+    console.log('📊 API Response:', data);
 
     // Check if we have features
     if (!data.features || data.features.length === 0) {
@@ -118,7 +151,7 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
     // Sort by distance (closest first)
     facilities.sort((a, b) => a.distance - b.distance);
 
-    console.log(`✅ Found ${facilities.length} medical facilities`);
+    console.log(`✅ Successfully found ${facilities.length} medical facilities`);
 
     return {
       success: true,
@@ -130,7 +163,7 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
     console.error('❌ Geoapify API Error:', error);
     
     // User-friendly error messages
-    let errorMessage = 'Unable to fetch nearby hospitals.';
+    let errorMessage = 'Unable to fetch nearby hospitals. Please check your internet connection.';
     
     if (error.message.includes('401')) {
       errorMessage = 'API key error. Please check your Geoapify API key.';
@@ -158,6 +191,7 @@ export const geocodeLocation = async (locationName) => {
   try {
     const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(locationName)}&limit=1&apiKey=${GEOAPIFY_API_KEY}`;
     
+    console.log('🔍 Geocoding:', locationName);
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -168,6 +202,7 @@ export const geocodeLocation = async (locationName) => {
 
     if (data.features && data.features.length > 0) {
       const coords = data.features[0].geometry.coordinates;
+      console.log('✅ Geocoded successfully:', coords);
       return {
         success: true,
         lat: coords[1],
@@ -182,7 +217,7 @@ export const geocodeLocation = async (locationName) => {
     };
 
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.error('❌ Geocoding error:', error);
     return {
       success: false,
       error: 'Failed to geocode location'
