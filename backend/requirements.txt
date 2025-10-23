@@ -1,0 +1,12 @@
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-SQLAlchemy==3.1.1
+requests==2.31.0
+SQLAlchemy==2.0.36
+python-dotenv==1.0.0
+
+# Optional dependencies (install only if using these services)
+# twilio==8.10.0              # For SMS alerts
+# sendgrid==6.11.0            # For email notifications
+# firebase-admin==6.3.0       # For push notifications
+
