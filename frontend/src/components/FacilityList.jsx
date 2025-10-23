@@ -51,17 +51,24 @@ const FacilityList = ({ facilities, onBookAppointment, onShowOnMap, filter, setF
 
         {/* Filter buttons */}
         <div className="flex flex-wrap gap-2">
-          {['all', 'hospital', 'clinic', 'pharmacy', 'dentist', 'doctors'].map((type) => (
+          {[
+            { value: 'all', label: '🌐 All' },
+            { value: 'hospital', label: '🏥 Hospital' },
+            { value: 'clinic', label: '🏪 Clinic' },
+            { value: 'pharmacy', label: '💊 Pharmacy/Medical Store' },
+            { value: 'dentist', label: '🦷 Dentist' },
+            { value: 'doctors', label: '👨‍⚕️ Doctors' }
+          ].map((item) => (
             <button
-              key={type}
-              onClick={() => setFilter(type)}
+              key={item.value}
+              onClick={() => setFilter(item.value)}
               className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                filter === type
+                filter === item.value
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {type === 'all' ? '🌐 All' : `${getTypeIcon(type)} ${type.charAt(0).toUpperCase() + type.slice(1)}`}
+              {item.label}
             </button>
           ))}
         </div>

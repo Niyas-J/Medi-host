@@ -37,8 +37,8 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
   try {
     console.log('🏥 Fetching hospitals from Geoapify:', { lat, lon, radius });
 
-    // Geoapify Places API endpoint
-    const categories = 'healthcare.hospital,healthcare.clinic,healthcare.pharmacy,healthcare.dentist,healthcare.doctors';
+    // Geoapify Places API endpoint - including all medical facilities and pharmacies
+    const categories = 'healthcare.hospital,healthcare.clinic,healthcare.pharmacy,healthcare.dentist,healthcare.doctors,commercial.chemist,commercial.pharmacy';
     const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radius}&limit=${limit}&apiKey=${GEOAPIFY_API_KEY}`;
 
     const response = await fetch(url, {
@@ -79,7 +79,7 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
       if (props.categories && props.categories.length > 0) {
         const category = props.categories[0];
         if (category.includes('clinic')) facilityType = 'clinic';
-        else if (category.includes('pharmacy')) facilityType = 'pharmacy';
+        else if (category.includes('pharmacy') || category.includes('chemist')) facilityType = 'pharmacy';
         else if (category.includes('dentist')) facilityType = 'dentist';
         else if (category.includes('doctors')) facilityType = 'doctors';
       }
