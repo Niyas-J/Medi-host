@@ -35,36 +35,41 @@ const Home = () => {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords
-        console.log('✅ Location detected:', latitude, longitude)
+        const { latitude, longitude, accuracy } = position.coords
+        console.log('✅ ============ LIVE LOCATION DETECTED ============')
+        console.log('📍 Latitude:', latitude)
+        console.log('📍 Longitude:', longitude)
+        console.log('📏 Accuracy:', accuracy, 'meters')
+        console.log('🔗 Google Maps:', `https://www.google.com/maps?q=${latitude},${longitude}`)
+        console.log('✅ Setting user location NOW...')
+        
         setUserLocation([latitude, longitude])
+        
+        console.log('🏥 Fetching hospitals for YOUR location...')
         fetchNearbyFacilities(latitude, longitude, searchRadius)
       },
       (error) => {
-        console.error('❌ Geolocation error:', error)
+        console.error('❌ GEOLOCATION ERROR:', error)
         console.error('Error code:', error.code)
         console.error('Error message:', error.message)
         
-        // Show user-friendly error and suggestion
-        let errorMsg = 'Unable to get your location. '
+        // Show user-friendly error with alert
+        let errorMsg = '⚠️ LOCATION ACCESS REQUIRED!\n\n'
         if (error.code === 1) {
-          errorMsg += 'PLEASE ALLOW LOCATION ACCESS in your browser, then refresh the page. Look for the 🔒 icon in the address bar and click it.'
+          errorMsg += 'You BLOCKED location access.\n\nTo fix:\n1. Click the 🔒 icon in address bar\n2. Change Location to "Allow"\n3. Refresh page (F5)'
         } else if (error.code === 2) {
-          errorMsg += 'Location information is unavailable. Check your device settings.'
+          errorMsg += 'Location unavailable. Enable GPS on your device.'
         } else if (error.code === 3) {
-          errorMsg += 'Location request timed out. Please try again.'
+          errorMsg += 'Location request timed out. Try again.'
         }
         
-        alert('⚠️ IMPORTANT: ' + errorMsg)
-        setError(errorMsg)
+        alert(errorMsg)
+        setError('Location access denied. Please allow location to see nearby hospitals.')
         setLoading(false)
-        
-        // DON'T use fallback - force user to enable location
-        // This way they see their actual area, not Bangalore
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0
       }
     )
