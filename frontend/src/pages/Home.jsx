@@ -41,20 +41,25 @@ const Home = () => {
       },
       (error) => {
         console.error('❌ Geolocation error:', error)
+        console.error('Error code:', error.code)
+        console.error('Error message:', error.message)
+        
         // Show user-friendly error and suggestion
         let errorMsg = 'Unable to get your location. '
         if (error.code === 1) {
-          errorMsg += 'Please allow location access in your browser settings, then refresh the page.'
-        } else {
-          errorMsg += 'Try searching for "Bangalore" or your city name instead.'
+          errorMsg += 'PLEASE ALLOW LOCATION ACCESS in your browser, then refresh the page. Look for the 🔒 icon in the address bar and click it.'
+        } else if (error.code === 2) {
+          errorMsg += 'Location information is unavailable. Check your device settings.'
+        } else if (error.code === 3) {
+          errorMsg += 'Location request timed out. Please try again.'
         }
+        
+        alert('⚠️ IMPORTANT: ' + errorMsg)
         setError(errorMsg)
         setLoading(false)
         
-        // Fallback: Load a default location (Bangalore) so user sees something
-        console.log('📍 Using fallback location: Bangalore')
-        setUserLocation([12.9716, 77.5946]) // Bangalore coordinates
-        fetchNearbyFacilities(12.9716, 77.5946, searchRadius)
+        // DON'T use fallback - force user to enable location
+        // This way they see their actual area, not Bangalore
       },
       {
         enableHighAccuracy: true,
