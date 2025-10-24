@@ -1,11 +1,12 @@
 // Geoapify Places API for live location and nearby hospital detection
+import { config } from '../config';
 
-// FORCE use of hardcoded API key for reliability
-const GEOAPIFY_API_KEY = 'dc461739b87042228f6be3ee0e2bf02a';
+const GEOAPIFY_API_KEY = config.geoapify.apiKey;
 
-// Debug: Log API key status
-console.log('🔑 Geoapify API Key:', GEOAPIFY_API_KEY);
-console.log('API Key length:', GEOAPIFY_API_KEY.length);
+// Debug: Log API key status (only first 10 chars for security)
+if (config.isDevelopment) {
+  console.log('🔑 Geoapify API Key:', GEOAPIFY_API_KEY ? `${GEOAPIFY_API_KEY.substring(0, 10)}...` : 'MISSING');
+}
 
 /**
  * Calculate distance between two coordinates using Haversine formula
