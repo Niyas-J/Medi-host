@@ -6,6 +6,7 @@ import FacilityList from '../components/FacilityList'
 import AppointmentForm from '../components/AppointmentForm'
 import EmergencyButton from '../components/EmergencyButton'
 import { fetchNearbyHospitalsGeoapify, geocodeLocation } from '../utils/geoapifyAPI'
+import { fetchNearbyFacilitiesDirectly } from '../utils/overpassAPI'
 
 const Home = () => {
   const [userLocation, setUserLocation] = useState(null)
@@ -74,22 +75,28 @@ const Home = () => {
     setError('')
 
     try {
-      // Use Geoapify Places API for live location and nearby hospitals
-      console.log('🏥 Fetching facilities using Geoapify API:', { lat, lon, radius })
+      // Try Geoapify first (better data quality)
+      console.log('🏥 Trying Geoapify API first:', { lat, lon, radius })
       console.log('📍 User Location:', `https://www.google.com/maps?q=${lat},${lon}`)
-      const response = await fetchNearbyHospitalsGeoapify(lat, lon, radius, 50)
+      const geoapifyResponse = await fetchNearbyHospitalsGeoapify(lat, lon, radius, 50)
       
-      if (response.success) {
-        console.log('✅ Found facilities:', response.facilities.length)
-        setFacilities(response.facilities)
-        
-        // Show info message if no facilities found
-        if (response.facilities.length === 0) {
-          setError(response.message || 'No medical facilities found in this area. Try increasing the search radius.')
-        }
+      if (geoapifyResponse.success && geoapifyResponse.facilities.length > 0) {
+        console.log('✅ Geoapify found facilities:', geoapifyResponse.facilities.length)
+        setFacilities(geoapifyResponse.facilities)
+        setLoading(false)
+        return
+      }
+      
+      // If Geoapify returns no results, try Overpass API as fallback
+      console.log('⚠️ Geoapify found 0 facilities, trying Overpass API...')
+      const overpassResponse = await fetchNearbyFacilitiesDirectly(lat, lon, radius)
+      
+      if (overpassResponse.success && overpassResponse.facilities.length > 0) {
+        console.log('✅ Overpass API found facilities:', overpassResponse.facilities.length)
+        setFacilities(overpassResponse.facilities)
       } else {
-        // Show user-friendly error from Geoapify API
-        setError(response.error || 'Unable to fetch nearby hospitals.')
+        setError('No medical facilities found in this area. Try increasing the search radius to 50km.')
+        setFacilities([])
       }
     } catch (err) {
       setError('Unable to fetch nearby hospitals. Please check your internet connection.')
