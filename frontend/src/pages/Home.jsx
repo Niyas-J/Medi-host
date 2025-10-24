@@ -27,7 +27,7 @@ const Home = () => {
     setError('')
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser')
+      setError('Geolocation is not supported by your browser. Try searching for a location instead.')
       setLoading(false)
       return
     }
@@ -35,13 +35,31 @@ const Home = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
+        console.log('✅ Location detected:', latitude, longitude)
         setUserLocation([latitude, longitude])
         fetchNearbyFacilities(latitude, longitude, searchRadius)
       },
       (error) => {
-        setError('Unable to retrieve your location. Please enable location services.')
+        console.error('❌ Geolocation error:', error)
+        // Show user-friendly error and suggestion
+        let errorMsg = 'Unable to get your location. '
+        if (error.code === 1) {
+          errorMsg += 'Please allow location access in your browser settings, then refresh the page.'
+        } else {
+          errorMsg += 'Try searching for "Bangalore" or your city name instead.'
+        }
+        setError(errorMsg)
         setLoading(false)
-        console.error('Geolocation error:', error)
+        
+        // Fallback: Load a default location (Bangalore) so user sees something
+        console.log('📍 Using fallback location: Bangalore')
+        setUserLocation([12.9716, 77.5946]) // Bangalore coordinates
+        fetchNearbyFacilities(12.9716, 77.5946, searchRadius)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     )
   }
