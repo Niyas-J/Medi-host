@@ -1,0 +1,46 @@
+========================================
+  VERCEL FIX - DO THIS RIGHT NOW
+========================================
+
+STEP 1 - GO TO VERCEL:
+→ https://vercel.com/dashboard
+
+STEP 2 - CLICK YOUR PROJECT:
+→ Find "Medi-host" or "frontend" project
+→ Click on it
+
+STEP 3 - ADD ENVIRONMENT VARIABLE:
+→ Click "Settings" (top menu)
+→ Click "Environment Variables" (left sidebar)  
+→ Click "Add New"
+→ Type this EXACTLY:
+
+   Key:   VITE_GEOAPIFY_API_KEY
+   Value: dc461739b87042228f6be3ee0e2bf02a
+
+→ Check ALL 3 boxes: Production, Preview, Development
+→ Click "Save"
+
+STEP 4 - REDEPLOY:
+→ Go to "Deployments" tab (top menu)
+→ Click latest deployment
+→ Click "..." (three dots)
+→ Click "Redeploy"
+→ UNCHECK "Use existing Build Cache"
+→ Click "Redeploy" button
+
+STEP 5 - WAIT 2-3 MINUTES
+→ Status will change from "Building" to "Ready"
+
+STEP 6 - TEST YOUR SITE:
+→ Open: https://frontend-fk1f98a8x-niyas-js-projects.vercel.app/
+→ Press: Ctrl+Shift+R (hard refresh)
+→ Press: F12 (open console)
+→ Look for: "🚀 Medi-Host App Starting..."
+→ Click "Allow" for location
+→ See hospitals!
+
+========================================
+DONE! Your site will work in 3-5 minutes
+========================================
+

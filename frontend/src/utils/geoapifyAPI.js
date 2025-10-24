@@ -3,10 +3,9 @@ import { config } from '../config';
 
 const GEOAPIFY_API_KEY = config.geoapify.apiKey;
 
-// Debug: Log API key status (only first 10 chars for security)
-if (config.isDevelopment) {
-  console.log('🔑 Geoapify API Key:', GEOAPIFY_API_KEY ? `${GEOAPIFY_API_KEY.substring(0, 10)}...` : 'MISSING');
-}
+// ALWAYS log API key status for debugging
+console.log('🔑 Geoapify API Key Status:', GEOAPIFY_API_KEY ? `${GEOAPIFY_API_KEY.substring(0, 10)}... (${GEOAPIFY_API_KEY.length} chars)` : '❌ MISSING');
+console.log('🔑 Full Key (for debugging):', GEOAPIFY_API_KEY);
 
 /**
  * Calculate distance between two coordinates using Haversine formula
@@ -47,6 +46,9 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
     const categories = 'healthcare.hospital,healthcare.clinic,healthcare.pharmacy,healthcare.dentist,healthcare.doctors,commercial.chemist,commercial.pharmacy';
     const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radius}&limit=${limit}&apiKey=${GEOAPIFY_API_KEY}`;
 
+    console.log('🌍 Geoapify request URL:', url);
+    console.log('🌍 Geoapify request params:', { lat, lon, radius, limit, categories });
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -54,12 +56,17 @@ export const fetchNearbyHospitalsGeoapify = async (lat, lon, radius = 5000, limi
       },
     });
 
+    console.log('📡 Geoapify response status:', response.status, response.statusText);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Geoapify API error response:', errorText);
       throw new Error(`Geoapify API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     console.log('📡 Geoapify raw response:', data);
+    console.log('📊 Geoapify features count:', data.features ? data.features.length : 0);
 
     // Check if we have features
     if (!data.features || data.features.length === 0) {

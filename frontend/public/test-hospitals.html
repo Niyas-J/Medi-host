@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital API Test - Quick Diagnostic</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .status { padding: 10px; margin: 10px 0; background: #000; border: 1px solid #0f0; }
+        .error { color: #f00; border-color: #f00; }
+        .success { color: #0f0; border-color: #0f0; }
+        button { 
+            padding: 15px 30px; 
+            font-size: 16px; 
+            background: #0f0; 
+            border: none; 
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #0c0; }
+        pre { background: #000; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🏥 HOSPITAL API DIAGNOSTIC TEST</h1>
+    
+    <button onclick="testLocation()">1️⃣ TEST LOCATION</button>
+    <button onclick="testGeoapify()">2️⃣ TEST GEOAPIFY API</button>
+    <button onclick="testOverpass()">3️⃣ TEST OVERPASS API</button>
+    <button onclick="testBangalore()">4️⃣ TEST BANGALORE (Known Location)</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_KEY = 'dc461739b87042228f6be3ee0e2bf02a';
+        let userLat = null;
+        let userLon = null;
+
+        function log(message, type = 'status') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+            console.log(message);
+        }
+
+        function testLocation() {
+            document.getElementById('results').innerHTML = '';
+            log('🔍 Testing Location Detection...', 'status');
+            
+            if (!navigator.geolocation) {
+                log('❌ Geolocation NOT supported', 'error');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLat = position.coords.latitude;
+                    userLon = position.coords.longitude;
+                    log(`✅ LOCATION DETECTED!`, 'success');
+                    log(`📍 Latitude: ${userLat}`, 'success');
+                    log(`📍 Longitude: ${userLon}`, 'success');
+                    log(`📏 Accuracy: ${position.coords.accuracy} meters`, 'success');
+                    log(`🔗 Google Maps: <a href="https://www.google.com/maps?q=${userLat},${userLon}" target="_blank">View on Map</a>`, 'success');
+                    log('✅ Now click "TEST GEOAPIFY API" to find hospitals', 'success');
+                },
+                (error) => {
+                    log(`❌ Location Error: ${error.message}`, 'error');
+                    log(`Error Code: ${error.code}`, 'error');
+                    if (error.code === 1) {
+                        log('🔧 FIX: Click 🔒 icon in address bar → Allow Location → Refresh', 'error');
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        async function testGeoapify() {
+            if (!userLat || !userLon) {
+                log('⚠️ Run "TEST LOCATION" first!', 'error');
+                return;
+            }
+
+            document.getElementById('results').innerHTML = '';
+            log('🔍 Testing Geoapify API...', 'status');
+            log(`📍 Searching near: ${userLat}, ${userLon}`, 'status');
+
+            const categories = 'healthcare.hospital,healthcare.clinic,healthcare.pharmacy,commercial.chemist';
+            const radius = 20000; // 20km
+            const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${userLon},${userLat},${radius}&limit=50&apiKey=${API_KEY}`;
+
+            log(`📡 API URL: ${url.substring(0, 100)}...`, 'status');
+
+            try {
+                const response = await fetch(url);
+                log(`📡 Response Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
+                const data = await response.json();
+                log(`📊 Raw Response:`, 'status');
+                log(`<pre>${JSON.stringify(data, null, 2).substring(0, 1000)}...</pre>`, 'status');
+
+                if (data.features && data.features.length > 0) {
+                    log(`✅ FOUND ${data.features.length} FACILITIES!`, 'success');
+                    data.features.slice(0, 5).forEach((f, i) => {
+                        const name = f.properties.name || f.properties.address_line1 || 'Unknown';
+                        const address = f.properties.address_line2 || f.properties.city || '';
+                        const dist = f.properties.distance ? (f.properties.distance / 1000).toFixed(1) : '?';
+                        log(`${i + 1}. ${name} - ${address} (${dist} km)`, 'success');
+                    });
+                } else {
+                    log('❌ NO FACILITIES FOUND', 'error');
+                    log('⚠️ Your location might be in a rural area with limited data', 'error');
+                    log('🔧 TRY: Click "TEST BANGALORE" to verify API works', 'error');
+                }
+            } catch (error) {
+                log(`❌ API ERROR: ${error.message}`, 'error');
+                log(`🔧 Check: API key, internet connection, CORS`, 'error');
+            }
+        }
+
+        async function testOverpass() {
+            if (!userLat || !userLon) {
+                log('⚠️ Run "TEST LOCATION" first!', 'error');
+                return;
+            }
+
+            document.getElementById('results').innerHTML = '';
+            log('🔍 Testing Overpass API (OpenStreetMap)...', 'status');
+
+            const radius = 20000;
+            const query = `
+                [out:json][timeout:25];
+                (
+                  node["amenity"="hospital"](around:${radius},${userLat},${userLon});
+                  node["amenity"="clinic"](around:${radius},${userLat},${userLon});
+                  node["amenity"="pharmacy"](around:${radius},${userLat},${userLon});
+                );
+                out body;
+            `;
+
+            try {
+                const response = await fetch('https://overpass-api.de/api/interpreter', {
+                    method: 'POST',
+                    body: query
+                });
+
+                const data = await response.json();
+                log(`✅ Overpass Response: ${data.elements.length} results`, data.elements.length > 0 ? 'success' : 'error');
+                
+                if (data.elements.length > 0) {
+                    data.elements.slice(0, 5).forEach((el, i) => {
+                        log(`${i + 1}. ${el.tags.name || 'Unnamed'} (${el.tags.amenity})`, 'success');
+                    });
+                } else {
+                    log('❌ NO FACILITIES FOUND via Overpass', 'error');
+                }
+            } catch (error) {
+                log(`❌ Overpass API ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBangalore() {
+            document.getElementById('results').innerHTML = '';
+            log('🔍 Testing Bangalore (Known location with many hospitals)...', 'status');
+
+            const lat = 12.9716;
+            const lon = 77.5946;
+            const categories = 'healthcare.hospital,healthcare.clinic';
+            const radius = 5000;
+            const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radius}&limit=20&apiKey=${API_KEY}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.features && data.features.length > 0) {
+                    log(`✅ API WORKS! Found ${data.features.length} hospitals in Bangalore`, 'success');
+                    data.features.slice(0, 5).forEach((f, i) => {
+                        const name = f.properties.name || f.properties.address_line1;
+                        log(`${i + 1}. ${name}`, 'success');
+                    });
+                    log('✅ Your API key is valid!', 'success');
+                    log('⚠️ Issue is likely: Your location has limited hospital data', 'error');
+                } else {
+                    log('❌ Even Bangalore returned no results - API KEY ISSUE?', 'error');
+                }
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run location test on load
+        window.onload = () => {
+            log('✅ Test page loaded. Click buttons above to diagnose.', 'success');
+        };
+    </script>
+</body>
+</html>
+
